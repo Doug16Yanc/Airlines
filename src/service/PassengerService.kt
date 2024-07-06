@@ -1,5 +1,6 @@
 package service
 
+import domain.Armchain
 import domain.Passenger
 import enums.TypePassenger
 import java.util.*
@@ -22,13 +23,13 @@ class PassengerService {
         return entry
     }
 
-    fun asksAboutSystem() : String {
+    fun asksAboutSystem(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): String {
         println("Já tem cadastro de passagem?\n S/s - Sim\n N/n - Não\n")
         var option = readLine().toString()
 
         when(option.lowercase(Locale.getDefault())) {
             "s" -> {
-                doRecordInSystem()
+                doRecordInSystem(firstClass, economy)
             }
             "n" -> {
                 seeDataPassenger()
@@ -37,8 +38,9 @@ class PassengerService {
         }
         return option
     }
-    private fun doRecordInSystem() : Int {
+    private fun doRecordInSystem(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): Passenger? {
         val passengers = initializePassengers()
+        var passenger : Passenger? = null
         var chances : Int = 3
         println("Faça o cadastro dos dados necessários para emissão de passagem:")
 
@@ -55,15 +57,16 @@ class PassengerService {
 
         do {
             println("Tipo de classe:\n P/p - Primeira classe\n E/e - Econômica\n ")
-            var option = readLine().toString()
+            val option = readLine().toString()
 
             when (option.lowercase(Locale.getDefault())) {
                 "p" -> {
-                    passengers.add(Passenger(id, cpf, rg, name, type = TypePassenger.FIRST_CLASS))
+                    passenger = Passenger(id, cpf, rg, name, type = TypePassenger.FIRST_CLASS)
+                    break
                 }
-
                 "e" -> {
-                    passengers.add(Passenger(id, cpf, rg, name, type = TypePassenger.ECONOMY))
+                    passenger = Passenger(id, cpf, rg, name, type = TypePassenger.ECONOMY)
+                    break
                 }
                 else -> {
                     println("Opção impossível.\n")
@@ -71,7 +74,12 @@ class PassengerService {
                 }
             }
         } while(chances > 0)
-        return 0
+
+        println("Escolha sua passagem:")
+        val ticketService = TicketService()
+        ticketService.doTicket(passenger, firstClass, economy)
+
+        return passenger
     }
     private fun seeDataPassenger() : Passenger? {
         var foundPassenger : Passenger? = null
@@ -86,11 +94,12 @@ class PassengerService {
             if (foundPassenger != null) {
                 val view = View()
                 view.showDataPassenger(foundPassenger)
+                break
             } else {
                 println("Número identificador não encontrado.")
                 chances--
             }
         } while (chances > 0)
-        return null
+        return foundPassenger
     }
 }
