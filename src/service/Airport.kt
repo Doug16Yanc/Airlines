@@ -20,24 +20,33 @@ class Airport {
         }
         return mutableListOf()
     }
-    fun doFirstInteraction() : Int? {
-        println("Bem-vindo(a) à linha aérea Fortaleza-São Paulo")
-        println("Quem é você?")
-        println("1 - Atendente \n2- Passageiro\n")
-        val option = readlnOrNull()?.toIntOrNull()
+    fun doFirstInteraction() : Int {
 
-        when(option) {
-            1 -> {
-                val attendantService = AttendantService()
-                attendantService.doLoginAttendant(initializeFirstClass(), initializeEconomy())
-            }
-            2 -> {
-                val passengerService = PassengerService()
-                passengerService.asksAboutSystem(initializeFirstClass(), initializeEconomy())
-            }
-            else -> println("Opção desconhecida.\n")
-        }
+        var option : Int
 
+        do {
+            println("Bem-vindo(a) à linha aérea Fortaleza-São Paulo")
+            println("Quem é você?")
+            println("1 - Atendente \n2- Passageiro\n3 - Sair\n")
+            option = readlnOrNull()?.toIntOrNull()!!
+
+            when (option) {
+                1 -> {
+                    val attendantService = AttendantService()
+                    attendantService.doLoginAttendant(initializeFirstClass(), initializeEconomy())
+                }
+
+                2 -> {
+                    val passengerService = PassengerService()
+                    passengerService.asksAboutSystem(initializeFirstClass(), initializeEconomy())
+                }
+                3 -> {println("Tchau")
+                    System.exit(0)}
+
+                else -> println("Opção desconhecida.\n")
+            }
+
+        } while(true)
         return option;
     }
 }
