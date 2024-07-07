@@ -5,80 +5,85 @@ import domain.Attendant
 import enums.StatusAttendant
 import repository.ICalculate
 
-class AttendantService : ICalculate{
-    fun initializeDataAttendant() : List<Attendant> {
-        val attendants = mutableListOf<Attendant>()
-        val attendant1 = Attendant(1, "Douglas", "doug", "1609", StatusAttendant.OFFLINE)
-        val attendant2 = Attendant(2, "Clara", "clara", "2910", StatusAttendant.OFFLINE)
-        val attendant3 = Attendant(3, "Devan", "dev", "0528", StatusAttendant.OFFLINE)
+class AttendantService : ICalculate {
 
-        attendants.add(attendant1)
-        attendants.add(attendant2)
-        attendants.add(attendant3)
+    private val attendants = initializeDataAttendant()
 
-        return attendants
+    fun initializeDataAttendant(): Set<Attendant> {
+        return setOf(
+            Attendant(1, "Douglas", "doug", "1609", 1600.00, StatusAttendant.OFFLINE),
+            Attendant(2, "Clara", "clara", "2910", 1600.00, StatusAttendant.OFFLINE),
+            Attendant(3, "Devan", "dev", "0528", 1600.00, StatusAttendant.OFFLINE)
+        )
     }
 
     fun doLoginAttendant(initializeFirstClass: MutableList<Armchain>, initializeEconomy: MutableList<Armchain>): Boolean {
-        var chances : Int = 3
+        var chances = 3
         println("Realize login com seu nome de usuário e senha.")
 
         do {
             println("Login: ")
-            val login = readlnOrNull()?.toString()
+            val login = readlnOrNull()?.trim()
 
             println("Senha: ")
-            val password = readlnOrNull()?.toString()
+            val password = readlnOrNull()?.trim()
 
-            val attendants = initializeDataAttendant()
+            if (login.isNullOrEmpty() || password.isNullOrEmpty()) {
+                println("Credenciais inválidas. Tente novamente.\n")
+                chances--
+                continue
+            }
 
-            val attendantFound = attendants.find { it.login.equals(login) && it.password.equals(password) }
+            val attendantFound = attendants.find { it.login == login && it.password == password }
 
             if (attendantFound != null) {
                 attendantFound.statusAttendant = StatusAttendant.ONLINE
-                interactesAttendant(attendantFound)
+                interactWithAttendant(attendantFound, initializeFirstClass, initializeEconomy)
                 return true
             } else {
                 println("Credenciais inválidas. Tente novamente.\n")
                 chances--
             }
-        } while(chances > 0)
+        } while (chances > 0)
         return false
     }
-    private fun interactesAttendant(attendant: Attendant) {
+
+    private fun interactWithAttendant(attendant: Attendant, firstClass: MutableList<Armchain>, economy: MutableList<Armchain>) {
         println("Bem-vindo(a), caríssimo(a) ${attendant.name}")
+        var option: String
         do {
             println("O que desejas?")
-            println(" 1 - Ver situação do transporte\n 2- Ver relatório dos passageiros. 3 - Sair\n 4 - Ficar offline\n")
-            var option = readln().toInt()
+            println(" T/t - Ver situação do transporte\n P/p- Ver relatório dos passageiros.\n C/c - Calcular seu salário\n S/s - Sair\n O/o - Ficar offline\n")
+            option = readln().trim().lowercase()
 
             when (option) {
-                1 -> {
-                    val airport = Airport()
-                    val seats = airport.initializeFirstClass() + airport.initializeEconomy()
+                "t" -> {
+                    val seats = firstClass + economy
                     println(seats)
                 }
-
-                2 -> {
+                "p" -> {
 
                 }
-                3 -> {
+                "c" -> {
+                    attendant.salary?.let { calculateValue(it, option) }
+                }
+                "s" -> {
                     break
                 }
-                4 -> {
+                "o" -> {
                     attendant.statusAttendant = StatusAttendant.OFFLINE
                     break
                 }
-
                 else -> {
                     println("Opção impossível.\n")
                 }
             }
-        } while(true)
+        } while (true)
     }
 
-    override fun calculateValue(value: Double, option: String): Double {
-        val amount = 0.0
-        return amount
+    override fun calculateValue(salary : Double, option: String): Double {
+        val newSalary = salary * 1.04
+        println("Salário do funcionário calculado para R$ ${newSalary}.")
+        return newSalary
     }
 }

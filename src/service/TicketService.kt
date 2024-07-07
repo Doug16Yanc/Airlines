@@ -10,7 +10,7 @@ import java.util.*
 
 class TicketService : ICalculate {
     fun doTicket(passenger: Passenger?, firstClass: MutableList<Armchain>, economy: MutableList<Armchain>) {
-        var chances : Int = 3
+        var chances = 3
         println("Escolha a poltrona:")
         println(firstClass)
         println("\n")
@@ -46,11 +46,11 @@ class TicketService : ICalculate {
         if (passenger != null) {
             println("Caro, ${passenger.name}, o valor da sua passagem é : R$ $price\n")
 
-            processWithAttendant(price)
+            processWithAttendant(passenger, price, number)
         }
     }
 
-    private fun processWithAttendant(price: Double) {
+    private fun processWithAttendant(passenger: Passenger, price: Double, chain: Int) {
         val attendantService = AttendantService()
 
         for (attendant : Attendant in attendantService.initializeDataAttendant()) {
@@ -72,7 +72,7 @@ class TicketService : ICalculate {
             println("Forma de pagamento:\n D/d - Dinheiro\n C/c - Cartão\n P/p - Pix\n")
             var option = readLine().toString()
 
-            determinesPaymentMethod(option, price)
+            determinesPaymentMethod(passenger, validate, option, price, chain)
         }
 
 
@@ -88,10 +88,17 @@ class TicketService : ICalculate {
         return price
     }
 
-    private fun determinesPaymentMethod(option: String, price: Double) {
+    private fun determinesPaymentMethod(
+        passenger: Passenger,
+        attendant: Attendant,
+        option: String,
+        price: Double,
+        chain: Int
+    ) {
+        val attendantService = AttendantService()
+        var change = 0.0
         when(option.lowercase(Locale.getDefault())){
             "d" -> {
-                var change = 0.0
                 println("Digite, em reais, o valor entregue: ")
                 var value = readln().toDouble()
 
@@ -106,6 +113,7 @@ class TicketService : ICalculate {
                     println("Perfeito, passagem sendo processada.")
                 }
                 calculateValue(change, option)
+                attendantService.calculateValue(price, option)
 
             }
             "c" -> {
@@ -123,16 +131,19 @@ class TicketService : ICalculate {
                         println("Opção impossível.\n")
                     }
                 }
+                attendantService.calculateValue(price, option)
             }
             "p" -> {
                 println("Pagamento realizado com sucesso.\n")
                 calculateValue(price, option)
+                attendantService.calculateValue(price, option)
             }
             else -> {
                 println("Opção impossível.\n")
             }
-
         }
+        val view = View()
+        view.showTicket(passenger, attendant, option, change, chain)
     }
     override fun calculateValue(value : Double, option : String): Double {
         var amount = 0.0

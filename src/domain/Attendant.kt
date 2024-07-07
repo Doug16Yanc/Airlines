@@ -7,5 +7,6 @@ data class Attendant(
     val name: String?,
     var login: String?,
     var password: String?,
+    var salary: Double?,
     var statusAttendant: StatusAttendant?
 ) {}
