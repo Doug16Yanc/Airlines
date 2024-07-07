@@ -1,5 +1,6 @@
 package service
 
+import domain.Armchain
 import domain.Attendant
 import domain.Passenger
 import java.time.LocalDateTime
@@ -7,6 +8,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 class View {
+
     fun showDataPassenger(passenger: Passenger) {
         println("   Dados do passageiro\n")
         println("   > Identificador : ${passenger.id}")

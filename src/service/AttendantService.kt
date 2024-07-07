@@ -53,16 +53,13 @@ class AttendantService : ICalculate {
         var option: String
         do {
             println("O que desejas?")
-            println(" T/t - Ver situação do transporte\n P/p- Ver relatório dos passageiros.\n C/c - Calcular seu salário\n S/s - Sair\n O/o - Ficar offline\n")
+            println(" T/t - Ver situação do transporte\n C/c - Calcular seu salário\n S/s - Sair\n O/o - Ficar offline\n")
             option = readln().trim().lowercase()
 
             when (option) {
                 "t" -> {
                     val seats = firstClass + economy
                     println(seats)
-                }
-                "p" -> {
-
                 }
                 "c" -> {
                     attendant.salary?.let { calculateValue(it, option) }
