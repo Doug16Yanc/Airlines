@@ -5,30 +5,42 @@ import domain.Attendant
 import domain.Passenger
 import enums.StatusArmchain
 import enums.StatusAttendant
+import enums.StatusPassenger
+import enums.TypePassenger
 import repository.ICalculate
 import java.util.*
 
 class TicketService : ICalculate {
-    fun doTicket(passenger: Passenger?, firstClass: MutableList<Armchain>, economy: MutableList<Armchain>) {
+    fun doTicket(
+        passenger: Passenger,
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>,
+        attendants: Set<Attendant>
+    ) {
+        val view = View()
+        val seats = firstClass + economy
         var chances = 3
+        println("\nDe 1 a 25: Primeira classe\nDe 26 a 50: Classe econômica.\n")
         println("Escolha a poltrona:")
-        println(firstClass)
-        println("\n")
-        println(economy)
+
+        view.showArmchainSituation()
 
         do {
             println("Escolha o número:")
             var number = readln().toInt()
-
-            val seats = firstClass + economy
 
             val found = seats.find { it.number == number }
 
             if (found != null) {
                 if (found.statusArmchain == StatusArmchain.FREE) {
                     println("Poltrona $number escolhida com sucesso.\n")
-                    found.statusArmchain = StatusArmchain.BUSY
-                    doPaymentTicket(passenger, number)
+                    if (number in 1..25){
+                        passenger.type = TypePassenger.FIRST_CLASS
+                    }
+                    else if (number in 26..50){
+                        passenger.type = TypePassenger.ECONOMY
+                    }
+                    doPaymentTicket(passenger, found, attendants)
                     break
                 } else {
                     println("Poltrona $number já ocupada.\n")
@@ -41,48 +53,52 @@ class TicketService : ICalculate {
         } while(chances > 0)
     }
 
-    private fun doPaymentTicket(passenger: Passenger?, number: Int) {
-        val price = calculatePrice(number)
+    private fun doPaymentTicket(passenger: Passenger?, found: Armchain?, attendants: Set<Attendant>) {
+        val price = found?.let { calculatePrice(it) }
         if (passenger != null) {
             println("Caro, ${passenger.name}, o valor da sua passagem é : R$ $price\n")
 
-            processWithAttendant(passenger, price, number)
+            if (price != null) {
+                processWithAttendant(passenger, attendants, price, found)
+            }
         }
     }
 
-    private fun processWithAttendant(passenger: Passenger, price: Double, chain: Int) {
-        val attendantService = AttendantService()
-
-        for (attendant : Attendant in attendantService.initializeDataAttendant()) {
+   fun processWithAttendant(passenger: Passenger, attendants: Set<Attendant>, price : Double, chain: Armchain) {
+        var available = false
+        for (attendant: Attendant in attendants) {
             if (attendant.statusAttendant == StatusAttendant.ONLINE) {
                 println("Identificador do atendente : ${attendant.id}")
                 println("Nome do atendente : ${attendant.name}\n")
-            }
-            else{
-                println("Sem atendentes disponíveis. Aguarde!")
+                available = true
             }
         }
+        if (available == true){
+            println("Digite o identificador do atendente que desejas comprovar pagamento:")
+            var number = readln().toInt()
 
-        println("Digite o identificador do atendente que desejas comprovar pagamento:")
-        var number = readln().toInt()
+            val validate = attendants.find { it.id == number }
 
-        val validate = attendantService.initializeDataAttendant().find { it.id == number }
+            if (validate != null) {
+                println("Forma de pagamento:\n D/d - Dinheiro\n C/c - Cartão\n P/p - Pix\n")
+                var option = readLine().toString()
 
-        if (validate != null) {
-            println("Forma de pagamento:\n D/d - Dinheiro\n C/c - Cartão\n P/p - Pix\n")
-            var option = readLine().toString()
-
-            determinesPaymentMethod(passenger, validate, option, price, chain)
+                determinesPaymentMethod(passenger, validate, option, price, chain)
+            }
         }
-
+        else {
+            println("Sem atendentes disponíveis, aguarde.\n")
+            passenger.status = StatusPassenger.WAITING
+            return
+        }
 
     }
-    private fun calculatePrice(number: Int) : Double {
+    private fun calculatePrice(chain: Armchain) : Double {
         var price = 0.0
-        if (number >= 1 && number < 26) {
+        if (chain.number in 1..26) {
             price = 2000.00
         }
-        else if (number >= 26 && number < 51) {
+        else if (chain.number in 26..50) {
             price = 1700.00
         }
         return price
@@ -93,14 +109,14 @@ class TicketService : ICalculate {
         attendant: Attendant,
         option: String,
         price: Double,
-        chain: Int
+        chain: Armchain
     ) {
         val attendantService = AttendantService()
         var change = 0.0
         when(option.lowercase(Locale.getDefault())){
             "d" -> {
                 println("Digite, em reais, o valor entregue: ")
-                var value = readln().toDouble()
+                val value = readln().toDouble()
 
                 if (value > price) {
                     println("Devolvidos R$ ${value - price}.\nPassagem sendo processada.\n")
@@ -118,7 +134,7 @@ class TicketService : ICalculate {
             }
             "c" -> {
                 println(" C/c - Crédito\n D/d - Débito")
-                var card = readln().toString()
+                var card = readln()
 
                 when(card.lowercase(Locale.getDefault())){
                     "c" -> {

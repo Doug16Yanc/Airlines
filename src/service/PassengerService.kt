@@ -1,16 +1,14 @@
 package service
 
 import domain.Armchain
+import domain.Attendant
 import domain.Passenger
-import enums.TypePassenger
+import enums.StatusPassenger
 import java.util.*
 import kotlin.random.Random
 
 
 class PassengerService {
-    private fun initializePassengers() : MutableList<Passenger> {
-        return mutableListOf()
-    }
 
     private fun generateID(clientes: List<Passenger>): Int {
         var entry : Int
@@ -23,28 +21,36 @@ class PassengerService {
         return entry
     }
 
-    fun asksAboutSystem(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): String {
+    fun asksAboutSystem(
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>,
+        passengers: MutableList<Passenger>,
+        attendants: Set<Attendant>
+    ): String {
         println("Já tem cadastro de passagem?\n S/s - Sim\n N/n - Não\n")
         var option = readLine().toString()
 
         when(option.lowercase(Locale.getDefault())) {
             "s" -> {
-                doRecordInSystem(firstClass, economy)
+                seeDataPassenger(firstClass, economy, passengers, attendants)
             }
             "n" -> {
-                seeDataPassenger()
+                doRecordInSystem(firstClass, economy, passengers, attendants)
             }
             else -> println("Opção impossível.\n")
         }
         return option
     }
-    private fun doRecordInSystem(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): Passenger? {
-        val passengers = initializePassengers()
-        var passenger : Passenger? = null
-        var chances : Int = 3
+    private fun doRecordInSystem(
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>,
+        passengers: MutableList<Passenger>,
+        attendants: Set<Attendant>
+    ): Passenger {
+        val passenger : Passenger
         println("Faça o cadastro dos dados necessários para emissão de passagem:")
 
-        val id = generateID(initializePassengers())
+        val id = generateID(passengers)
 
         println("CPF : ")
         val cpf = readLine()
@@ -55,46 +61,47 @@ class PassengerService {
         println("Nome : ")
         val name = readLine()
 
-        do {
-            println("Tipo de classe:\n P/p - Primeira classe\n E/e - Econômica\n ")
-            val option = readLine().toString()
+        passenger = Passenger(id, cpf, rg, name, null, null)
 
-            when (option.lowercase(Locale.getDefault())) {
-                "p" -> {
-                    passenger = Passenger(id, cpf, rg, name, type = TypePassenger.FIRST_CLASS)
-                    break
-                }
-                "e" -> {
-                    passenger = Passenger(id, cpf, rg, name, type = TypePassenger.ECONOMY)
-                    break
-                }
-                else -> {
-                    println("Opção impossível.\n")
-                    chances--
-                }
-            }
-        } while(chances > 0)
+        passengers.add(passenger)
+        println("Caro passageiro, seu número identificador é $id, caso não haja atendentes disponíveis, você irá necessitá-lo depois.\n")
 
         println("Escolha sua passagem:")
         val ticketService = TicketService()
-        ticketService.doTicket(passenger, firstClass, economy)
+        ticketService.doTicket(passenger, firstClass, economy, attendants)
 
         return passenger
     }
-    private fun seeDataPassenger() : Passenger? {
-        var foundPassenger : Passenger? = null
-        var chances : Int = 3
+    private fun seeDataPassenger(
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>,
+        passengers: MutableList<Passenger>,
+        attendants: Set<Attendant>
+    ): Passenger? {
+        var foundPassenger : Passenger?
+        var chances = 3
 
         do {
             println("Digite seu número identificador aqui: ")
-            var number = readln().toInt()
+            val number = readln().toInt()
 
-            foundPassenger = initializePassengers().find { it.id == number }
+            foundPassenger = passengers.find { it.id == number }
 
             if (foundPassenger != null) {
-                val view = View()
-                view.showDataPassenger(foundPassenger)
+                when(foundPassenger.status){
+                    StatusPassenger.WAITING -> {
+                        println("Caríssimo, ${foundPassenger.name}, vamos tentar novamente.\n")
+                        val ticketService = TicketService()
+                        ticketService.doTicket(foundPassenger, firstClass, economy, attendants)
+                    }
+                    StatusPassenger.FINISHED -> {
+                        val view = View()
+                        view.showDataPassenger(foundPassenger)
+                    }
+                    null -> TODO()
+                }
                 break
+
             } else {
                 println("Número identificador não encontrado.")
                 chances--

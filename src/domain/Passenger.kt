@@ -1,5 +1,6 @@
 package domain
 
+import enums.StatusPassenger
 import enums.TypePassenger
 
 data class Passenger(
@@ -7,5 +8,6 @@ data class Passenger(
     val cpf: String?,
     val rg: String?,
     val name: String?,
-    val type: TypePassenger?
+    var type: TypePassenger?,
+    var status : StatusPassenger?
 ) {}
