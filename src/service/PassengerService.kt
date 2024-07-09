@@ -83,7 +83,7 @@ class PassengerService {
 
         do {
             println("Digite seu número identificador aqui: ")
-            val number = readln().toInt()
+            val number = readlnOrNull()?.toInt()
 
             foundPassenger = passengers.find { it.id == number }
 

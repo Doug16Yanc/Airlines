@@ -12,21 +12,56 @@ import java.util.UUID
 
 class View {
 
-    fun showArmchainSituation() : List<Armchain>{
-        val airport = Airport()
-        val utility = Utility()
-        val firstClass = airport.initializeFirstClass()
-        val economy = airport.initializeEconomy()
+    fun showMapAirplane(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): List<Armchain> {
         val seats = firstClass + economy
-        val armchainSymbol = "\uD83D\uDCBA"
-        println("\n Verde - livre\n Vermelho - ocupado\n")
-        for (armchain: Armchain in seats){
-            when(armchain.statusArmchain){
-                StatusArmchain.FREE ->  println(utility.printGreen("${armchain.number}${armchainSymbol}"))
-                StatusArmchain.BUSY ->  println(utility.printRed("${armchain.number}${armchainSymbol}"))
-                null -> TODO()
+        val busy = seats.count { it.statusArmchain == StatusArmchain.BUSY }
+        val sortedSeats = seats.sortedBy { it.number }
+
+        if(busy > 0) {
+            println("Mapa do avião e seus passageiros")
+            println("Poltrona\tPassageiro\t Documento do passageiro\n")
+            for (armchain in sortedSeats) {
+                if (armchain.statusArmchain == StatusArmchain.BUSY) {
+                    println("${armchain.number} - \t${armchain.passenger?.name} - \t${armchain.passenger?.rg}\n")
+                }
             }
         }
+        else{
+            println("Nenhum passageiro alocado ainda.\n")
+        }
+        return sortedSeats
+    }
+
+    fun showArmchainSituation(firstClass: MutableList<Armchain>, economy: MutableList<Armchain>): List<Armchain> {
+        val utility = Utility()
+        val seats = firstClass + economy
+        val armchainSymbol = "\uD83D\uDCBA"
+
+        val leftSide = seats.take(25)
+        val rightSide = seats.drop(25).take(25)
+
+        println("\nDe 1 a 25: Primeira classe\nDe 26 a 50: Classe econômica.\n")
+        println("\n Verde - livre\n Vermelho - ocupado\n")
+
+        for (i in 0 until 25) {
+            val leftArmchain = leftSide.getOrNull(i)
+            val rightArmchain = rightSide.getOrNull(i)
+
+            val leftOutput = when (leftArmchain?.statusArmchain) {
+                StatusArmchain.FREE -> utility.printGreen("${leftArmchain.number}${armchainSymbol}")
+                StatusArmchain.BUSY -> utility.printRed("${leftArmchain.number}${armchainSymbol}")
+                else -> ""
+            }
+
+            val rightOutput = when (rightArmchain?.statusArmchain) {
+                StatusArmchain.FREE -> utility.printGreen("${rightArmchain.number}${armchainSymbol}")
+                StatusArmchain.BUSY -> utility.printRed("${rightArmchain.number}${armchainSymbol}")
+                else -> ""
+            }
+
+            println("$leftOutput \t\t $rightOutput")
+        }
+
         return seats
     }
 
@@ -37,10 +72,19 @@ class View {
         println("\n > Registro Geral : ${passenger.rg}")
         println("\n > Tipo de passageiro : ${passenger.type.toString()}\n")
     }
-    fun showTicket(passenger: Passenger, attendant: Attendant, option: String, change: Double, chain: Armchain) {
+    fun showTicket(
+        passenger: Passenger,
+        attendant: Attendant,
+        option: String,
+        change: Double,
+        chain: Armchain,
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>
+    ) {
         passenger.status = StatusPassenger.FINISHED
         chain.statusArmchain = StatusArmchain.BUSY
-
+        val seats = firstClass + economy
+        seats.apply { chain.passenger = passenger }
         val current = LocalDateTime.now()
 
         val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")

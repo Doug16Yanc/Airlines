@@ -1,14 +1,16 @@
 package service
 
+import domain.Armchain
 import domain.Attendant
 import enums.StatusAttendant
-import repository.ICalculate
 
-class AttendantService : ICalculate {
+class AttendantService {
 
 
     fun doLoginAttendant(
-        attendants: Set<Attendant>
+        attendants: Set<Attendant>,
+        armchainsFirst: MutableList<Armchain>,
+        armchainEconomy: MutableList<Armchain>
     ): Boolean {
         var chances = 3
         println("Realize login com seu nome de usuário e senha.")
@@ -30,7 +32,7 @@ class AttendantService : ICalculate {
 
             if (attendantFound != null) {
                 attendantFound.statusAttendant = StatusAttendant.ONLINE
-                interactWithAttendant(attendantFound)
+                interactWithAttendant(attendantFound, armchainsFirst, armchainEconomy)
                 return true
             } else {
                 println("Credenciais inválidas. Tente novamente.\n")
@@ -40,21 +42,25 @@ class AttendantService : ICalculate {
         return false
     }
 
-    private fun interactWithAttendant(attendant: Attendant) {
+    private fun interactWithAttendant(
+        attendant: Attendant,
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>
+    ) {
+        val view = View()
         println("Bem-vindo(a), caríssimo(a) ${attendant.name}")
         var option: String
         do {
             println("O que desejas?")
-            println(" T/t - Ver situação do transporte\n C/c - Calcular seu salário\n S/s - Sair\n O/o - Ficar offline\n")
+            println(" T/t - Ver situação do transporte\n R/r - Ver relatório do avião\n S/s - Sair\n O/o - Ficar offline\n")
             option = readln().trim().lowercase()
 
             when (option) {
                 "t" -> {
-                    val view = View()
-                    view.showArmchainSituation()
+                    view.showArmchainSituation(firstClass, economy)
                 }
-                "c" -> {
-                    attendant.salary?.let { calculateValue(it, option) }
+                "r" -> {
+                    view.showMapAirplane(firstClass, economy)
                 }
                 "s" -> {
                     attendant.statusAttendant = StatusAttendant.ONLINE
@@ -68,12 +74,7 @@ class AttendantService : ICalculate {
                     println("Opção impossível.\n")
                 }
             }
-        } while (option.equals('s') || option.equals('o'))
+        } while (true)
     }
 
-    override fun calculateValue(salary : Double, option: String): Double {
-        val newSalary = salary * 1.04
-        println("Salário do funcionário calculado para R$ ${newSalary}.")
-        return newSalary
-    }
 }

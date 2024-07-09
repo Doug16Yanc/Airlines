@@ -22,7 +22,7 @@ class Airport {
     fun initializeFirstClass() : MutableList<Armchain>{
         val armchainsFirst = mutableListOf<Armchain>()
         for (i in 1..25){
-            armchainsFirst.add(Armchain(i, StatusArmchain.FREE))
+            armchainsFirst.add(Armchain(i, StatusArmchain.FREE, null))
         }
         return armchainsFirst
     }
@@ -31,7 +31,7 @@ class Airport {
         val armchainsEconomy = mutableListOf<Armchain>()
 
         for (i in 26..50) {
-            armchainsEconomy.add(Armchain(i, StatusArmchain.FREE))
+            armchainsEconomy.add(Armchain(i, StatusArmchain.FREE, null))
         }
         return armchainsEconomy
     }
@@ -53,7 +53,7 @@ class Airport {
             when (option) {
                 1 -> {
                     val attendantService = AttendantService()
-                    attendantService.doLoginAttendant(attendants)
+                    attendantService.doLoginAttendant(attendants, armchainsFirst, armchainEconomy)
                 }
 
                 2 -> {

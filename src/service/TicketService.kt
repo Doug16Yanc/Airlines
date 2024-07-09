@@ -7,10 +7,9 @@ import enums.StatusArmchain
 import enums.StatusAttendant
 import enums.StatusPassenger
 import enums.TypePassenger
-import repository.ICalculate
 import java.util.*
 
-class TicketService : ICalculate {
+class TicketService {
     fun doTicket(
         passenger: Passenger,
         firstClass: MutableList<Armchain>,
@@ -20,10 +19,9 @@ class TicketService : ICalculate {
         val view = View()
         val seats = firstClass + economy
         var chances = 3
-        println("\nDe 1 a 25: Primeira classe\nDe 26 a 50: Classe econômica.\n")
         println("Escolha a poltrona:")
 
-        view.showArmchainSituation()
+        view.showArmchainSituation(firstClass, economy)
 
         do {
             println("Escolha o número:")
@@ -40,7 +38,7 @@ class TicketService : ICalculate {
                     else if (number in 26..50){
                         passenger.type = TypePassenger.ECONOMY
                     }
-                    doPaymentTicket(passenger, found, attendants)
+                    doPaymentTicket(passenger, found, attendants, firstClass, economy)
                     break
                 } else {
                     println("Poltrona $number já ocupada.\n")
@@ -53,18 +51,32 @@ class TicketService : ICalculate {
         } while(chances > 0)
     }
 
-    private fun doPaymentTicket(passenger: Passenger?, found: Armchain?, attendants: Set<Attendant>) {
+    private fun doPaymentTicket(
+        passenger: Passenger?,
+        found: Armchain?,
+        attendants: Set<Attendant>,
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>
+    ) {
         val price = found?.let { calculatePrice(it) }
         if (passenger != null) {
             println("Caro, ${passenger.name}, o valor da sua passagem é : R$ $price\n")
 
             if (price != null) {
-                processWithAttendant(passenger, attendants, price, found)
+                processWithAttendant(passenger, attendants, price, found, firstClass, economy)
             }
         }
     }
 
-   fun processWithAttendant(passenger: Passenger, attendants: Set<Attendant>, price : Double, chain: Armchain) {
+   fun processWithAttendant(
+       passenger: Passenger,
+       attendants: Set<Attendant>,
+       price: Double,
+       chain: Armchain,
+       firstClass: MutableList<Armchain>,
+       economy: MutableList<Armchain>
+   ) {
+        var chances = 3
         var available = false
         for (attendant: Attendant in attendants) {
             if (attendant.statusAttendant == StatusAttendant.ONLINE) {
@@ -73,18 +85,24 @@ class TicketService : ICalculate {
                 available = true
             }
         }
-        if (available == true){
-            println("Digite o identificador do atendente que desejas comprovar pagamento:")
-            var number = readln().toInt()
+        if (available){
+            do {
+                println("Digite o identificador do atendente que desejas comprovar pagamento:")
+                val number = readln().toInt()
 
-            val validate = attendants.find { it.id == number }
+                val validate = attendants.find { it.id == number }
 
-            if (validate != null) {
-                println("Forma de pagamento:\n D/d - Dinheiro\n C/c - Cartão\n P/p - Pix\n")
-                var option = readLine().toString()
-
-                determinesPaymentMethod(passenger, validate, option, price, chain)
-            }
+                if (validate != null) {
+                    println("Forma de pagamento:\n D/d - Dinheiro\n C/c - Cartão\n P/p - Pix\n")
+                    val option = readLine().toString()
+                    determinesPaymentMethod(passenger, validate, option, price, chain, firstClass, economy)
+                    break
+                } else {
+                    println("\n\nIdentificador de atendente inválido, tente novamente.\nVocê tem mais duas chances, se errar em todas, voltará ao início.\n\n")
+                    passenger.status = StatusPassenger.WAITING
+                    chances--
+                }
+            } while (chances > 0)
         }
         else {
             println("Sem atendentes disponíveis, aguarde.\n")
@@ -109,9 +127,10 @@ class TicketService : ICalculate {
         attendant: Attendant,
         option: String,
         price: Double,
-        chain: Armchain
+        chain: Armchain,
+        firstClass: MutableList<Armchain>,
+        economy: MutableList<Armchain>
     ) {
-        val attendantService = AttendantService()
         var change = 0.0
         when(option.lowercase(Locale.getDefault())){
             "d" -> {
@@ -128,9 +147,6 @@ class TicketService : ICalculate {
                 else {
                     println("Perfeito, passagem sendo processada.")
                 }
-                calculateValue(change, option)
-                attendantService.calculateValue(price, option)
-
             }
             "c" -> {
                 println(" C/c - Crédito\n D/d - Débito")
@@ -138,42 +154,24 @@ class TicketService : ICalculate {
 
                 when(card.lowercase(Locale.getDefault())){
                     "c" -> {
-                        calculateValue(price, option)
+                        println("Crédito escolhido com sucesso.\n")
                     }
                     "d" -> {
-                        calculateValue(price, option)
+                        println("Débito escolhido com sucesso.\n")
                     }
                     else -> {
                         println("Opção impossível.\n")
                     }
                 }
-                attendantService.calculateValue(price, option)
             }
             "p" -> {
-                println("Pagamento realizado com sucesso.\n")
-                calculateValue(price, option)
-                attendantService.calculateValue(price, option)
+                println("Pagamento realized com sucesso.\n")
             }
             else -> {
                 println("Opção impossível.\n")
             }
         }
         val view = View()
-        view.showTicket(passenger, attendant, option, change, chain)
-    }
-    override fun calculateValue(value : Double, option : String): Double {
-        var amount = 0.0
-        when(option.lowercase()){
-            "d" -> {
-                amount = value * 1.02
-            }
-            "c" -> {
-                amount = value * 1.03
-            }
-            "p" -> {
-                amount = value * 1.06
-            }
-        }
-        return amount
+        view.showTicket(passenger, attendant, option, change, chain, firstClass, economy)
     }
 }
