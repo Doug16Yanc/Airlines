@@ -30,14 +30,14 @@
   <h2 align="center"> Como testar localmente? </h2>
 
   <p>
-    Tenha o SDK Java instalado e configurado corretamente e utilize alguma IDE de sua preferência: IntelliJ IDEA, Eclipse, Visual Studio Code ou Android Studio 
-    e faça o clone em terminal Git ou alguma distribuição Linux via chave SSH por meio do comando:
+    Como é executado em memória, basta iniciar o projeto pelo arquivo Program.kt, antes disso, tenha o SDK Java instalado e configurado corretamente e
+    utilize alguma IDE de sua preferência: IntelliJ IDEA, Eclipse, Visual Studio Code ou  Android Studio e faça o clone em terminal Git ou alguma
+    distribuição Linux via chave SSH por meio do comando:
 
-      
 ```bash
     git clone git@github.com:Doug16Yanc/Airlines.git
 ```
 
-Basta iniciar o projeto pelo arquivo Program.kt e executar em memória.
+    
   </p>
   
